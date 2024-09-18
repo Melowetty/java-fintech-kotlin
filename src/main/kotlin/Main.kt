@@ -11,6 +11,7 @@ import java.nio.file.Path
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import ru.melowetty.dsl.html
 import ru.melowetty.model.KudagoResponse
 import ru.melowetty.model.News
 
@@ -37,10 +38,12 @@ fun main() {
     println()
 
     val period = LocalDate.now().minusDays(30).rangeTo(LocalDate.now())
-
     println(news.getMostRatedNews(period = period))
 
     saveNews("news.csv", news)
+    println()
+
+    getNewsAsHtml(news.first())
 }
 
 suspend fun getNews(page: Int = 1, count: Int = 100): List<News> {
@@ -84,5 +87,38 @@ fun saveNews(path: String, news: Collection<News>) {
         }
             .map { it.joinToString(delimiter) }
             .forEach { writer.println(it) }
+    }
+}
+
+fun getNewsAsHtml(news: News) {
+    html {
+        body {
+            header(level = 1) {
+                +news.title
+            }
+
+            header(level = 2) {
+                +news.publicationDate.toString()
+                +news.place?.toString()
+            }
+
+            text {
+                +news.description
+            }
+
+            text {
+                bold {
+                    +news.favoritesCount.toString()
+                    +news.commentsCount.toString()
+                    +news.rating.toString()
+                }
+            }
+
+            text {
+                link(href = news.siteUrl) {
+                    +"Ссылка на статью"
+                }
+            }
+        }
     }
 }

@@ -6,6 +6,8 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -38,7 +40,7 @@ fun main() {
 
     println(news.getMostRatedNews(period = period))
 
-    println("Hello World!")
+    saveNews("news.csv", news)
 }
 
 suspend fun getNews(page: Int = 1, count: Int = 100): List<News> {
@@ -58,4 +60,29 @@ fun List<News>.getMostRatedNews(period: ClosedRange<LocalDate>, count: Int = 20)
     return filter { period.contains(it.publicationDate.toLocalDate()) }
         .sortedBy { it.rating }
         .drop(count)
+}
+
+fun saveNews(path: String, news: Collection<News>) {
+    val filePath = Path.of(path)
+
+    if (filePath.parent?.let { Files.exists(it) } == true)
+        throw IllegalArgumentException("Такого пути нет!")
+
+    if (Files.exists(filePath))
+        throw IllegalArgumentException("Файл с таким именем уже существует!")
+
+    filePath.toFile().printWriter().use { writer ->
+        val delimiter = ";"
+        val fieldsName = arrayOf("id", "title", "publicationDate", "place", "description", "siteUrl",
+            "favoritesCount", "commentsCount", "rating")
+
+        writer.println(fieldsName.joinToString(delimiter))
+
+        news.map {
+            arrayOf<String>(it.id.toString(), it.title, it.publicationDate.toString(), it.place?.id.toString(), it.description,
+                it.siteUrl, it.favoritesCount.toString(), it.commentsCount.toString(), it.rating.toString())
+        }
+            .map { it.joinToString(delimiter) }
+            .forEach { writer.println(it) }
+    }
 }

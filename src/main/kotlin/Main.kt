@@ -5,10 +5,8 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.client.statement.request
-import io.ktor.http.parameters
-import io.ktor.http.parametersOf
 import io.ktor.serialization.kotlinx.json.json
+import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import ru.melowetty.model.KudagoResponse
@@ -26,14 +24,19 @@ val client = HttpClient(CIO) {
     }
 }
 
-private val fields = listOf("id", "title", "place", "description", "site_url", "favorites_count", "comments_count")
+private val fields = listOf("id", "title", "publication_date", "place", "description", "site_url", "favorites_count", "comments_count")
 
 fun main() {
     val news = runBlocking {
-        getNews(page = 2)
+        getNews(page = 1)
     }
 
     println(news)
+    println()
+
+    val period = LocalDate.now().minusDays(30).rangeTo(LocalDate.now())
+
+    println(news.getMostRatedNews(period = period))
 
     println("Hello World!")
 }
@@ -49,4 +52,10 @@ suspend fun getNews(page: Int = 1, count: Int = 100): List<News> {
         }
     }.body()
     return response.results
+}
+
+fun List<News>.getMostRatedNews(period: ClosedRange<LocalDate>, count: Int = 20): List<News> {
+    return filter { period.contains(it.publicationDate.toLocalDate()) }
+        .sortedBy { it.rating }
+        .drop(count)
 }

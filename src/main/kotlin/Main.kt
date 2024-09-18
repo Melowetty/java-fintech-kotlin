@@ -27,7 +27,8 @@ val client = HttpClient(CIO) {
     }
 }
 
-private val fields = listOf("id", "title", "publication_date", "place", "description", "site_url", "favorites_count", "comments_count")
+private val fields =
+    listOf("id", "title", "publication_date", "place", "description", "site_url", "favorites_count", "comments_count")
 
 fun main() {
     val news = runBlocking {
@@ -76,14 +77,18 @@ fun saveNews(path: String, news: Collection<News>) {
 
     filePath.toFile().printWriter().use { writer ->
         val delimiter = ";"
-        val fieldsName = arrayOf("id", "title", "publicationDate", "place", "description", "siteUrl",
-            "favoritesCount", "commentsCount", "rating")
+        val fieldsName = arrayOf(
+            "id", "title", "publicationDate", "place", "description", "siteUrl",
+            "favoritesCount", "commentsCount", "rating"
+        )
 
         writer.println(fieldsName.joinToString(delimiter))
 
         news.map {
-            arrayOf<String>(it.id.toString(), it.title, it.publicationDate.toString(), it.place?.id.toString(), it.description,
-                it.siteUrl, it.favoritesCount.toString(), it.commentsCount.toString(), it.rating.toString())
+            arrayOf<String>(
+                it.id.toString(), it.title, it.publicationDate.toString(), it.place?.id.toString(), it.description,
+                it.siteUrl, it.favoritesCount.toString(), it.commentsCount.toString(), it.rating.toString()
+            )
         }
             .map { it.joinToString(delimiter) }
             .forEach { writer.println(it) }

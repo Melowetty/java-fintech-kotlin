@@ -12,8 +12,8 @@ class NewsViewService {
                 }
 
                 header(level = 2) {
-                    +news.publicationDate.toString()
-                    +news.place?.toString()
+                    +"Дата публикации: ${news.publicationDate.toString()}"
+                    +"Место: ${news.place?.toString()}"
                 }
 
                 text {
@@ -22,9 +22,9 @@ class NewsViewService {
 
                 text {
                     bold {
-                        +news.favoritesCount.toString()
-                        +news.commentsCount.toString()
-                        +news.rating.toString()
+                        +"Лайков: ${news.favoritesCount.toString()}"
+                        +"Количество комментариев: ${news.commentsCount.toString()}"
+                        +"Рейтинг: ${news.rating.toString()}"
                     }
                 }
 

@@ -1,10 +1,14 @@
 package ru.melowetty.service
 
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import mu.KotlinLogging
 import ru.melowetty.model.News
 
 class NewsStorageService {
+    private val logger = KotlinLogging.logger {  }
+
     fun saveNews(path: String, news: Collection<News>) {
         val filePath = Path.of(path)
 
@@ -21,16 +25,20 @@ class NewsStorageService {
                 "favoritesCount", "commentsCount", "rating"
             )
 
-            writer.println(fieldsName.joinToString(delimiter))
+            try {
+                writer.println(fieldsName.joinToString(delimiter))
 
-            news.map {
-                arrayOf<String>(
-                    it.id.toString(), it.title, it.publicationDate.toString(), it.place?.id.toString(), it.description,
-                    it.siteUrl, it.favoritesCount.toString(), it.commentsCount.toString(), it.rating.toString()
-                )
+                news.map {
+                    arrayOf<String>(
+                        it.id.toString(), it.title, it.publicationDate.toString(), it.place?.id.toString(), it.description,
+                        it.siteUrl, it.favoritesCount.toString(), it.commentsCount.toString(), it.rating.toString()
+                    )
+                }
+                    .map { it.joinToString(delimiter) }
+                    .forEach { writer.println(it) }
+            } catch (ioException: IOException) {
+                logger.error { ioException }
             }
-                .map { it.joinToString(delimiter) }
-                .forEach { writer.println(it) }
         }
     }
 }

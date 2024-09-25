@@ -1,5 +1,9 @@
 package ru.melowetty.dsl
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {  }
+
 interface Element {
     fun render(builder: StringBuilder, indent: String)
 }
@@ -91,6 +95,6 @@ class Link : BodyTag("a") {
 fun html(init: HTML.() -> Unit): HTML {
     val html = HTML()
     html.init()
-    println(html.toString())
+    logger.info { html.toString() }
     return html
 }

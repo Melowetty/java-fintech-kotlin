@@ -12,7 +12,7 @@ import ru.melowetty.service.KudagoApiService
 import ru.melowetty.service.NewsStorageService
 import ru.melowetty.service.NewsViewService
 
-val client = HttpClient(CIO) {
+private val client = HttpClient(CIO) {
     install(ContentNegotiation) {
         json(Json {
             ignoreUnknownKeys = true

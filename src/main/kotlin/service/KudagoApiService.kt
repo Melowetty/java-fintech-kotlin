@@ -4,7 +4,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.runBlocking
-import ru.melowetty.client
 import ru.melowetty.model.KudagoResponse
 import ru.melowetty.model.News
 
@@ -29,7 +28,7 @@ class KudagoApiService(
 
     private fun getNewsByPage(page: Int, count: Int): List<News> {
         val response = runBlocking<KudagoResponse> {
-            client.get("https://kudago.com/public-api/v1.4/news") {
+            httpClient.get("https://kudago.com/public-api/v1.4/news") {
                 url {
                     parameters.append("location", "spb")
                     parameters.append("fields", fields.joinToString(","))

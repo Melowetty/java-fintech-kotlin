@@ -6,7 +6,6 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.client.request.get
 import io.ktor.utils.io.errors.IOException
-import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import ru.melowetty.model.KudagoResponse
 import ru.melowetty.model.News
@@ -20,36 +19,22 @@ class KudagoApiService(
         listOf("id", "title", "publication_date", "place", "description", "site_url", "favorites_count", "comments_count")
 
 
-    fun getNews(page: Int = 1, count: Int = 100): Sequence<News> {
-        return sequence {
-            var nextPage = page
-            while (true) {
-                try {
-                    val news = getNewsByPage(nextPage, count)
-                    if (news.isEmpty()) break
-                    yieldAll(news)
-                    nextPage += 1
-                } catch (runtimeException: RuntimeException) {
-                    logger.error { runtimeException }
-                    break
-                }
-            }
-        }
+    suspend fun getNews(page: Int = 1, count: Int = 100,): List<News> {
+        return getNewsByPage(page, count)
     }
 
-    private fun getNewsByPage(page: Int, count: Int): List<News> {
+    private suspend fun getNewsByPage(page: Int, count: Int): List<News> {
         try {
-            val response = runBlocking<KudagoResponse> {
-                httpClient.get("https://kudago.com/public-api/v1.4/news") {
-                    url {
-                        parameters.append("location", "spb")
-                        parameters.append("fields", fields.joinToString(","))
-                        parameters.append("expand", "place")
-                        parameters.append("page_size", count.toString())
-                        parameters.append("page", page.toString())
-                    }
-                }.body()
-            }
+            val response = httpClient.get("https://kudago.com/public-api/v1.4/news") {
+                url {
+                    parameters.append("location", "spb")
+                    parameters.append("fields", fields.joinToString(","))
+                    parameters.append("expand", "place")
+                    parameters.append("page_size", count.toString())
+                    parameters.append("page", page.toString())
+                }
+            }.body<KudagoResponse>()
+
             return response.results
         } catch (serverResponseException: ServerResponseException) {
             logger.error { serverResponseException }

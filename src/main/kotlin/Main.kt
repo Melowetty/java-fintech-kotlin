@@ -4,10 +4,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
-import java.time.LocalDate
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
-import ru.melowetty.Extensions.Companion.getMostRatedNews
+import ru.melowetty.model.News
 import ru.melowetty.service.KudagoApiService
 import ru.melowetty.service.NewsStorageService
 import ru.melowetty.service.NewsViewService
@@ -32,15 +38,31 @@ private val newsViewService = NewsViewService()
 
 fun main() {
     try {
-        val news = kudagoApiService.getNews()
-        logger.info { news.take(10).toList() }
+        val n = 5
+        val workers = newFixedThreadPoolContext(n, "News workers")
+        val channel = Channel<List<News>>()
+        val works = mutableListOf<Job>()
+        val endPage = 30
+        val startTime = System.currentTimeMillis()
+        for (i in 1 .. n) {
+            works.add(CoroutineScope(workers).launch {
+                for(page in i..endPage step n) {
+                    logger.info { "Новости запрошены, страница $page" }
+                    val news = kudagoApiService.getNews(page)
+                    channel.send(news)
+                }
+            })
+    }
 
-        val period = LocalDate.now().minusDays(30).rangeTo(LocalDate.now())
-        logger.info { news.getMostRatedNews(period = period, count = 5) }
+        CoroutineScope(Dispatchers.IO).launch {
+            works.joinAll()
+            val endTime = System.currentTimeMillis()
+            logger.info { "Канал закрылся через ${endTime - startTime} мс" }
+            channel.close()
+        }
 
-        newsStorageService.saveNews("news.csv", news.take(5).toList())
+        newsStorageService.saveNews("news.csv", channel)
 
-        newsViewService.getNewsAsHtml(news.first())
     } catch (e: Exception) {
         logger.error { e }
     }
